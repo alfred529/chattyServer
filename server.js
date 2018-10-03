@@ -21,11 +21,11 @@ const wss = new SocketServer({ server });
 
 // Broadcast to all function
 wss.broadcast = (data) => {
-  wss.clients.forEach(client => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(data);
-    }
-  });
+    wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(data);
+        }
+    });
 };
 
 
@@ -33,64 +33,52 @@ wss.broadcast = (data) => {
 // When a client connects they are assigned a socket, represented by
 // the ws parameter in the callback.
 wss.on('connection', (ws) => {
-    console.log('Client connected');
+
+    let usersConnected = {
+      type: "userCount",
+      content: wss.clients.size
+    }
+    wss.broadcast(JSON.stringify(usersConnected));
+
+
 
     ws.on('message', (msgData) => {
-        console.log("msgData = ", msgData);
 
         const msg = JSON.parse(msgData);
         msg.id = uuidv4();
-        console.log("msg with id = ", msg);
+
+        switch (msg.type) {
+            case "postMessage":
+
+                msg.type = "incomingMessage";
+                wss.broadcast(JSON.stringify(msg)); // broadcasts to all connected clients
+                // ws.send(JSON.stringify(msg));    // only sends back to client
+
+                break;
+            case "postNotification":
+
+                msg.type = "incomingNotification";
+                wss.broadcast(JSON.stringify(msg)); // broadcasts to all connected clients
+
+                break;
+            default:
+                // show an error in the console if the message type is unknown
+                throw new Error("Unknown event type " + msg.type);
+        }
 
 
-        wss.broadcast(JSON.stringify(msg)); // broadcasts to all connected clients
-        // ws.send(JSON.stringify(msg));    // only sends back to client
+
     });
 
 
     // Set up a callback for when a client closes the socket. This usually means they closed their browser.
-    ws.on('close', () => console.log('Client disconnected'));
+    ws.on('close', (ws) => {
+
+      usersConnected = {
+        type: "userCount",
+        content: wss.clients.size
+      }
+      wss.broadcast(JSON.stringify(usersConnected));
+
+    });
 });
-
-
-
-
-
-// uuidv4();
-
-
-// exampleSocket.onmessage = function(event) {
-//   var f = document.getElementById("chatbox").contentDocument;
-//   var text = "";
-//   var msg = JSON.parse(event.data);
-//   var time = new Date(msg.date);
-//   var timeStr = time.toLocaleTimeString();
-
-//   switch(msg.type) {
-//     case "id":
-//       clientID = msg.id;
-//       setUsername();
-//       break;
-//     case "username":
-//       text = "<b>User <em>" + msg.name + "</em> signed in at " + timeStr + "</b><br>";
-//       break;
-//     case "message":
-//       text = "(" + timeStr + ") <b>" + msg.name + "</b>: " + msg.text + "<br>";
-//       break;
-//     case "rejectusername":
-//       text = "<b>Your username has been set to <em>" + msg.name + "</em> because the name you chose is in use.</b><br>"
-//       break;
-//     case "userlist":
-//       var ul = "";
-//       for (i=0; i < msg.users.length; i++) {
-//         ul += msg.users[i] + "<br>";
-//       }
-//       document.getElementById("userlistbox").innerHTML = ul;
-//       break;
-//   }
-
-//   if (text.length) {
-//     f.write(text);
-//     document.getElementById("chatbox").contentWindow.scrollByPages(1);
-//   }
-// };
