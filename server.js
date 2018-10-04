@@ -35,12 +35,10 @@ wss.broadcast = (data) => {
 wss.on('connection', (ws) => {
 
     let usersConnected = {
-      type: "userCount",
-      content: wss.clients.size
+        type: "userCount",
+        content: wss.clients.size
     }
     wss.broadcast(JSON.stringify(usersConnected));
-
-
 
     ws.on('message', (msgData) => {
 
@@ -74,11 +72,11 @@ wss.on('connection', (ws) => {
     // Set up a callback for when a client closes the socket. This usually means they closed their browser.
     ws.on('close', (ws) => {
 
-      usersConnected = {
-        type: "userCount",
-        content: wss.clients.size
-      }
-      wss.broadcast(JSON.stringify(usersConnected));
+        usersConnected = {
+            type: "userCount",
+            content: wss.clients.size
+        }
+        wss.broadcast(JSON.stringify(usersConnected));
 
     });
 });
